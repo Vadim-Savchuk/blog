@@ -1,7 +1,18 @@
 import { Link } from 'react-router-dom';
 
+import { useAppDispatch, useAppSelector } from 'hooks/hooks';
+
+import { logout } from '../../../redux/slices/userSlice';
+
 const Header = () => {
-  const auth = true;
+  const auth = useAppSelector(state => Boolean(state.user.token));
+
+  const dispatch = useAppDispatch()
+
+  const logoutHandler = () => {
+    dispatch(logout());
+    window.localStorage.removeItem('token');
+  };
 
   return (
     <header className="header">
@@ -84,7 +95,12 @@ const Header = () => {
                   </Link>
                 </li>
                 <li className="header__profile-elem">
-                  <button className="header__profile-link">Sign out</button>
+                  <button
+                    className="header__profile-link"
+                    onClick={logoutHandler}
+                  >
+                    Sign out
+                  </button>
                 </li>
               </ul>
             </div>

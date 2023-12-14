@@ -5,12 +5,16 @@ import PrivateRouter from 'components/hoc/privateRouter/PrivateRouter';
 
 import { privateRoutes, publicRoutes } from 'router/router';
 
+import { useAppSelector } from 'hooks/hooks';
+
 const AppRouter = () => {
+  const auth = useAppSelector(state => Boolean(state.user.token));
+
   return (
     <Loyout>
       <Routes>
         {/* Public Routes ===> */}
-        {privateRoutes.map(elem => {
+        {publicRoutes.map(elem => {
           return (
             <Route
               key={elem.path}
@@ -21,9 +25,9 @@ const AppRouter = () => {
         })}
 
         {/* Private Routes ===> */}
-        {publicRoutes.map(elem => {
+        {privateRoutes.map(elem => {
           return (
-            <Route element={<PrivateRouter auth={true} />}>
+            <Route element={<PrivateRouter auth={auth} />}>
               <Route
                 key={elem.path}
                 path={elem.path}

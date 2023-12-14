@@ -1,23 +1,26 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from 'hooks/hooks';
 
 import { registerUser } from '../../redux/slices/userSlice';
 
-// import { registerUser } from 'redux/slices/userSlice';
-
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const isAuth = useAppSelector(state => Boolean(state.user.token));
+  
+  const auth = useAppSelector(state => Boolean(state.user.token));
 
   const dispatch = useAppDispatch();
 
   const handlerSubmit = () => {
     try {
-      dispatch(registerUser({ email, password }));
+      dispatch(
+        registerUser({
+          email: email,
+          password: password,
+        }),
+      );
       setEmail('');
       setPassword('');
     } catch (error) {
@@ -25,13 +28,17 @@ const Register = () => {
     }
   };
 
+  if (auth) {
+    return <Navigate to="/" />;
+  }
+
   return (
     <section className="section-auth">
       <div className="section-auth__header">
         <h1 className="main-title section-auth__main-title">Registration</h1>
         <p>Register in to get the most out of nuntium.</p>
       </div>
-      <form className="auth-form">
+      <form className="auth-form" onSubmit={e => e.preventDefault()}>
         <input
           type="text"
           value={email}
@@ -50,7 +57,7 @@ const Register = () => {
           I have an account
         </Link>
         <button className="button" onClick={handlerSubmit}>
-          Login
+          Register
         </button>
       </form>
     </section>

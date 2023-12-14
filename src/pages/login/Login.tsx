@@ -1,27 +1,64 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+
+import { useAppDispatch, useAppSelector } from 'hooks/hooks';
+
+import { loginUser } from '../../redux/slices/userSlice';
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const auth = useAppSelector(state => Boolean(state.user.token));
+
+  const dispatch = useAppDispatch();
+
+  const handlerSubmit = () => {
+    try {
+      dispatch(
+        loginUser({
+          email: email,
+          password: password,
+        }),
+      );
+      setEmail('');
+      setPassword('');
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  if (auth) {
+    return <Navigate to="/" />;
+  }
+
   return (
     <section className="section-auth">
       <div className="section-auth__header">
         <h1 className="main-title section-auth__main-title">Welcome back!</h1>
         <p>Sign in to get the most out of nuntium.</p>
       </div>
-      <form className="auth-form">
+      <form className="auth-form" onSubmit={e => e.preventDefault()}>
         <input
-          className="auth-form__input"
           type="text"
-          placeholder="Username"
+          value={email}
+          placeholder="Email"
+          className="auth-form__input"
+          onChange={e => setEmail(e.target.value)}
         />
         <input
-          className="auth-form__input"
           type="text"
+          value={password}
           placeholder="Password"
+          className="auth-form__input"
+          onChange={e => setPassword(e.target.value)}
         />
         <Link className="auth-form__link" to="/register">
           Create an account
         </Link>
-        <button className="button">Login</button>
+        <button className="button" onClick={handlerSubmit}>
+          Login
+        </button>
       </form>
     </section>
   );

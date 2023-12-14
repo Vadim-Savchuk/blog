@@ -1,9 +1,4 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  AnyAction,
-  PayloadAction,
-} from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import axios from 'utils/axios';
 
@@ -12,103 +7,100 @@ import { User } from 'types/types';
 type UserState = {
   user: User | null;
   token: string | null;
-  error: string | null;
   loading: boolean;
+  error: string | null;
 };
 
-// Register User
+const initialState: UserState = {
+  user: null,
+  token: localStorage.getItem('token') || null,
+  error: null,
+  loading: false,
+};
+
+// Register user ===>
+
+type RegiseResponse = {
+  newUser: User;
+  token: string;
+};
 
 type RegisterRequest = {
   email: string;
   password: string;
 };
 
-type RegisterResponse = {
-  newUser: User;
-  token: string;
-};
+// prettier-ignore
+export const registerUser = createAsyncThunk<RegiseResponse, RegisterRequest, { rejectValue: string }> (
+  'user/registerUser', 
+  async (request, { rejectWithValue }) => {
+    const response = await axios.post('/auth/register', {
+      email: request.email,
+      password: request.password,
+    });
 
-export const registerUser = createAsyncThunk<
-  RegisterResponse,
-  RegisterRequest,
-  { rejectValue: string }
->('auth/registerUser', async (request, { rejectWithValue }) => {
-  const response = await axios.post('/auth/register', {
-    email: request.email,
-    password: request.password,
-  });
+    if (response.status !== 201) {
+      return rejectWithValue('Error into function registerUser in userSlice');
+    }
 
-  if (response.status !== 201) {
-    return rejectWithValue('Error into function registerUser in userSlice');
-  }
+    if (response.data.token) {
+      window.localStorage.setItem('token', response.data.token);
+    }
 
-  if (response.data.token) {
-    window.localStorage.setItem('token', response.data.token);
-  }
-
-  return response.data;
+    return response.data;
 });
 
-// Login User
-
-type LoginRequest = {
-  email: string;
-  password: string;
-};
+// Login user ===>
 
 type LoginResponse = {
   user: User;
   token: string;
 };
 
-export const loginUser = createAsyncThunk<
-  LoginResponse,
-  LoginRequest,
-  { rejectValue: string }
->('auth/loginUser', async (request, { rejectWithValue }) => {
-  const response = await axios.post('/auth/login', {
-    email: request.email,
-    password: request.password,
-  });
+type LoginRequest = {
+  email: string;
+  password: string;
+};
 
-  if (response.status !== 200) {
-    return rejectWithValue('Error into function loginUser in userSlice');
-  }
+// prettier-ignore
+export const loginUser = createAsyncThunk<LoginResponse, LoginRequest, { rejectValue: string }>(
+  'user/loginUser',
+  async (request, { rejectWithValue }) => {
+    const response = await axios.post('/auth/login', {
+      email: request.email,
+      password: request.password,
+    });
 
-  if (response.data.token) {
-    window.localStorage.setItem('token', response.data.token);
-  }
+    if (response.status !== 200) {
+      return rejectWithValue('Error into function loginUser in userSlice');
+    }
 
-  return response.data;
+    if (response.data.token) {
+      window.localStorage.setItem('token', response.data.token);
+    }
+
+    return response.data;
 });
 
-// Get User
+// Get user ===>
 
-type GetMeResponse = {
+type GetUserResponse = {
   user: User;
   token: string;
 };
 
-export const getMe = createAsyncThunk<
-  GetMeResponse,
-  undefined,
-  { rejectValue: string }
->('auth/getMe', async (_, { rejectWithValue }) => {
-  const response = await axios.get('/auth/me');
+// prettier-ignore
+export const getUser = createAsyncThunk<GetUserResponse, undefined, { rejectValue: string }> (
+  'user/getUser', 
+  async (_, { rejectWithValue }) => {
+    const response = await axios.get('/auth/me');
 
-  if (response.status !== 200) {
-    return rejectWithValue('Error into function getMe in userSlice');
-  }
+    if (response.status !== 200) {
+      return rejectWithValue('Error into function loginUser in userSlice');
+    }
 
-  return response.data;
+    return response.data;
 });
-
-const initialState: UserState = {
-  user: null,
-  token: null,
-  error: null,
-  loading: false,
-};
 
 const userSlice = createSlice({
   name: 'user',
@@ -118,11 +110,12 @@ const userSlice = createSlice({
       state.user = null;
       state.token = null;
       state.error = null;
+      state.loading = false;
     },
   },
   extraReducers: builder => {
     builder
-      // Register User
+      // Register User ===>
       .addCase(registerUser.pending, state => {
         state.error = null;
         state.loading = true;
@@ -132,37 +125,31 @@ const userSlice = createSlice({
         state.user = action.payload.newUser;
         state.token = action.payload.token;
       })
-      // Login User
+      // Login User ===>
       .addCase(loginUser.pending, state => {
         state.error = null;
         state.loading = true;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.token = action.payload.token;
         state.user = action.payload.user;
+        state.token = action.payload.token;
       })
-      // Get User
-      .addCase(getMe.pending, state => {
+      // Get User ===>
+      .addCase(getUser.pending, state => {
         state.error = null;
         state.loading = true;
       })
-      .addCase(getMe.fulfilled, (state, action) => {
+      .addCase(getUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.token = action.payload?.token;
         state.user = action.payload?.user;
-      })
-      // Error Middleware
-      .addMatcher(isError, (state, action: PayloadAction<string>) => {
-        state.loading = false;
-        state.error = action.payload;
+        state.token = action.payload?.token;
       });
   },
 });
 
-export const { logout } = userSlice.actions;
-export default userSlice.reducer;
+// export const isAuth = useAppSelector(state => Boolean(state.user.token));
 
-function isError(action: AnyAction) {
-  return action.type.endsWith('rejected');
-}
+export const { logout } = userSlice.actions;
+
+export default userSlice.reducer;
